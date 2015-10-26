@@ -19,6 +19,18 @@ func getDB() *sql.DB {
 
 //type DataItem struct ...
 
+const (
+	DEBUG = true
+)
+
+func dbError (err error, secureErrMessage string) error {
+	if DEBUG { //
+		return err
+	} else {
+		return errors.New (secureErrMessage)	
+	}
+}
+
 //=====================================================
 // search
 //=====================================================
@@ -45,12 +57,12 @@ func searchSimiliarDataItems(forItemId int) ([]*SimiliarDataItem, error) {
 				a.SIMILAR_ID
 				from DH_SIMILAR a 
 				WHERE a.DATAITEM_ID=%d 
-				LIMIT %d 
 				ORDER BY a.SCORE DESC
+				LIMIT %d 
 				`, forItemId, maxRows)
 	rows, err := db.Query(sql)
 	if err != nil {
-		return nil, err
+		return nil, dbError (err, "db query error")
 	}
 	defer rows.Close()
 
@@ -58,19 +70,19 @@ func searchSimiliarDataItems(forItemId int) ([]*SimiliarDataItem, error) {
 	numIds := 0
 	for rows.Next() && numIds < maxRows {
 		if err := rows.Scan(&ids[numIds]); err != nil {
-			return nil, err
+			return nil, dbError (err, "db query scan error")
 		}
 		numIds++
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, dbError (err, "db query rows error")
 	}
 
 	items := make([]*SimiliarDataItem, numIds)
 	numItems := 0
 	for i := 0; i < numIds; i++ {
 		item, err := retrieveSimiliarDataItem(db, ids[i])
-		if err != nil {
+		if err == nil {
 			items[numItems] = item
 			numItems++
 		}
@@ -111,17 +123,17 @@ func buildSimiliarDataItems(forItemId int) error {
 	
 	err := deleteSimiliarDataItems(db, forItemId)
 	if err != nil {
-		return err
+		return dbError (err, "db delete error")
 	}
 
 	forItem, err := retrieveSimpleDataItem(db, forItemId)
 	if err != nil {
-		return err
+		return dbError (err, "db retrieve simple data item error")
 	}
 
 	allItems, err := retrieveAllSimpleDataItems(db)
 	if err != nil {
-		return err
+		return dbError (err, "db retrieve items error")
 	}
 
 	similiarItems := findSimiliarSimpleDataItems(forItem, allItems, 70.0)
@@ -133,7 +145,7 @@ func buildSimiliarDataItems(forItemId int) error {
 }
 
 func deleteSimiliarDataItems(db *sql.DB, forItemId int) error {
-	sql := fmt.Sprintf("DELETE FROM DH_SIMILAR a where a.DATAITEM_ID=%d", forItemId)
+	sql := fmt.Sprintf("DELETE FROM DH_SIMILAR where DATAITEM_ID=%d", forItemId)
 	result, err := db.Exec(sql)
 	if err != nil {
 		return err

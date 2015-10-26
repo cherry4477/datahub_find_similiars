@@ -66,7 +66,8 @@ func _retrieveAllSimpleDataItems() ([]*SimpleDataItem, error) {
 //=====================================================
 
 // set DB env before testing
-// set DB=root:root@tcp(10.1.235.96:3306)/datahub?charset=utf8
+// set DB=datahub:datahub@tcp(10.1.235.96:3306)/datahub?charset=utf8
+// export DB=datahub:datahub@tcp(10.1.235.96:3306)/datahub?charset=utf8
 func TestSearch(t *testing.T) {
 	t.Logf("TestSearch, DB_URL = %s\n", DB_URL)
 	items, err := searchSimiliarDataItems(1011)
@@ -82,7 +83,7 @@ func TestSearch(t *testing.T) {
 }
 
 // set DB env before testing
-// set DB=root:root@tcp(10.1.235.96:3306)/datahub?charset=utf8
+// set DB=datahub:datahub@tcp(10.1.235.96:3306)/datahub?charset=utf8
 //func TestBuild (t *testing.T) {
 //	err := buildSimiliarDataItems (1011)
 //	if err != nil {

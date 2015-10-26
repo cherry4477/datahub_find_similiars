@@ -9,6 +9,7 @@ import (
 	"os"
 	"database/sql"
 	"encoding/json"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type Ds struct {
@@ -23,7 +24,9 @@ var (
 func init() {
 	log.Println("connect to", DB_URL)
 	db, err := sql.Open("mysql", DB_URL)
-	if err == nil {
+	if err != nil {
+		log.Printf ("error: %s\n", err)
+	} else {
 		ds.db = db
 	}
 }
