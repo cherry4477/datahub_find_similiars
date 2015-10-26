@@ -1,9 +1,14 @@
-FROM golang
- 
-COPY . /go/src/github.com/yaxinlx/datahub-find-similiars
-RUN go install github.com/yaxinlx/datahub-find-similiars
+FROM golang:1.5.1
 
-ENV DB root:root@tcp(10.1.235.96:3306)/datahub?charset=utf8
-ENV PORT 6666
-ENTRYPOINT /go/bin/similiars -port=$PORT 
-EXPOSE $PORT
+ENV SERVICE_NAME datahub-find-similiars
+ENV SRC_DIR /go/src/github.com/asiainfoLDP/$SERVICE_NAME
+COPY . $SRC_DIR
+
+ENV START_SCRIPT start.sh
+WORKDIR $SRC_DIR
+RUN chmod +x $START_SCRIPT
+go build
+
+ENV SERVICE_PORT 9999
+CMD ["./$START_SCRIPT", "$SERVICE_NAME", "$SERVICE_PORT"]
+EXPOSE $SERVICE_PORT

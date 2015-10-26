@@ -6,18 +6,44 @@ import (
 	"errors"
 	//"encoding/json"
 	"database/sql"
+   "os"
 	"fmt"
+   "log"
+	_ "github.com/go-sql-driver/mysql"
 )
 
-//=====================================================
-// to rewrite
-//=====================================================
+type Ds struct {
+	db *sql.DB
+}
+
+var (
+	ds     = new(Ds)
+)
 
 func getDB() *sql.DB {
 	return ds.db
 }
 
-//type DataItem struct ...
+func init() {
+	DB_ADDR     := os.Getenv("MYSQL_PORT_3306_TCP_ADDR")
+	DB_PORT     := os.Getenv("MYSQL_PORT_3306_TCP_PORT")
+	DB_DATABASE := os.Getenv("MYSQL_ENV_MYSQL_DATABASE")
+	DB_USER     := os.Getenv("MYSQL_ENV_MYSQL_USER")
+	DB_PASSWORD := os.Getenv("MYSQL_ENV_MYSQL_PASSWORD")
+	DB_URL      := fmt.Sprintf(`%s:%s@tcp(%s:%s)/%s?charset=utf8`, DB_USER, DB_PASSWORD, DB_ADDR, DB_PORT, DB_DATABASE)
+	
+	log.Println("connect to", DB_URL)
+	db, err := sql.Open("mysql", DB_URL)
+	if err != nil {
+		log.Printf ("error: %s\n", err)
+	} else {
+		ds.db = db
+	}
+}
+
+//=====================================================
+// 
+//=====================================================
 
 const (
 	DEBUG = true

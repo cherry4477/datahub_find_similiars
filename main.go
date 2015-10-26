@@ -6,30 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"os"
-	"database/sql"
 	"encoding/json"
-	_ "github.com/go-sql-driver/mysql"
 )
-
-type Ds struct {
-	db *sql.DB
-}
-
-var (
-	ds     = new(Ds)
-	DB_URL = os.Getenv("DB")
-)
-
-func init() {
-	log.Println("connect to", DB_URL)
-	db, err := sql.Open("mysql", DB_URL)
-	if err != nil {
-		log.Printf ("error: %s\n", err)
-	} else {
-		ds.db = db
-	}
-}
 
 //======================================================
 //
