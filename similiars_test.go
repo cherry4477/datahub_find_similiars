@@ -1,8 +1,8 @@
 package main
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 )
 
 //=====================================================
@@ -62,22 +62,22 @@ func _retrieveAllSimpleDataItems() ([]*SimpleDataItem, error) {
 }
 
 //=====================================================
-// 
+//
 //=====================================================
 
 // set DB env before testing
 // set DB=root:root@tcp(10.1.235.96:3306)/datahub?charset=utf8
-func TestSearch (t *testing.T) {
-	t.Logf ("TestSearch, DB_URL = %s\n", DB_URL)
-	items, err := searchSimiliarDataItems (1011)
+func TestSearch(t *testing.T) {
+	t.Logf("TestSearch, DB_URL = %s\n", DB_URL)
+	items, err := searchSimiliarDataItems(1011)
 	if err != nil {
-		t.Errorf ("TestSearch error: %s", err)
+		t.Errorf("TestSearch error: %s", err)
 		return
 	}
-	
-	t.Logf ("TestSearch: number of result: %d\n", len (items))
+
+	t.Logf("TestSearch: number of result: %d\n", len(items))
 	for _, item := range items {
-		t.Logf ("item.Dataitem_name = %s\n", item.Dataitem_name)
+		t.Logf("item.Dataitem_name = %s\n", item.Dataitem_name)
 	}
 }
 
@@ -91,28 +91,27 @@ func TestSearch (t *testing.T) {
 //	}
 //}
 
-func TestGetSimiliars (t *testing.T) {
+func TestGetSimiliars(t *testing.T) {
 	item, err := _retrieveSimpleDataItem(1)
 	if err != nil {
 		t.Errorf("_retrieveSimpleDataItem err = %s\n", err)
 		return
 	}
 	t.Logf("item.name = %s\n", item.name)
-	
-	
+
 	allSimpleDataItems, err := _retrieveAllSimpleDataItems()
 	if err != nil {
 		t.Errorf("_retrieveAllSimpleDataItems err = %s\n", err)
 		return
 	}
-	t.Logf("len (allSimpleDataItems) = %d\n", len (allSimpleDataItems))
+	t.Logf("len (allSimpleDataItems) = %d\n", len(allSimpleDataItems))
 
 	similiarSimpleDataItems := retrieveSimiliarSimpleDataItems(item, allSimpleDataItems, 30.0)
-	if len (similiarSimpleDataItems) < 1 || similiarSimpleDataItems [0].id != 4 || similiarSimpleDataItems [0].score != 100.0 {
-		t.Errorf ("the first item id should be 4\n")
+	if len(similiarSimpleDataItems) < 1 || similiarSimpleDataItems[0].id != 4 || similiarSimpleDataItems[0].score != 100.0 {
+		t.Errorf("the first item id should be 4\n")
 	}
-	
-	t.Logf("len (similiarSimpleDataItems) = %d\n", len (similiarSimpleDataItems))
+
+	t.Logf("len (similiarSimpleDataItems) = %d\n", len(similiarSimpleDataItems))
 	for i, item := range similiarSimpleDataItems {
 		t.Logf("i=%d, item.name = %s\n", i, item.name)
 	}
