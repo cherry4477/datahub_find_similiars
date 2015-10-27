@@ -281,6 +281,10 @@ func findSimiliarSimpleDataItems(dataItem *SimpleDataItem, allDataItems []*Simpl
 func splitNameIntoSegments(name string) []string {
 	runes := []rune(name)
 	num := len(runes)
+   if num <= 2 {
+      return []string{name}
+   }
+   
 	segments := make([]string, num-1)
 	for i := 0; i < num-1; i++ {
 		segments[i] = string(runes[i : i+2])
@@ -293,8 +297,9 @@ func splitKeywords(keywords string) []string {
    num := len (words)
    index := 0
    for i := 0; i < num; i++ {
-      if len (strings.TrimSpace (words[0])) > 0 {
-         words [index] = words [i]
+      word := words[i]
+      if len (strings.TrimSpace (word)) > 0 {
+         words [index] = word
          index ++
       }
    }
@@ -304,8 +309,8 @@ func splitKeywords(keywords string) []string {
 func calculateKeywordsScore(weight float64, words1 []string, words2 []string) float64 {
 	k := 0
 
-	fmt.Printf("words1 = %s\n", strings.Join(words1, ","))
-	fmt.Printf("words2 = %s\n", strings.Join(words1, ","))
+	//fmt.Printf("words1 = %s\n", strings.Join(words1, ","))
+	//fmt.Printf("words2 = %s\n", strings.Join(words2, ","))
 
 	n := len(words1)
 	m := len(words2)
@@ -322,7 +327,7 @@ func calculateKeywordsScore(weight float64, words1 []string, words2 []string) fl
 		}
 	}
    
-   fmt.Printf("k = %d, m = %d, n = %d\n", k, m, n)
+   //fmt.Printf("k = %d, m = %d, n = %d\n", k, m, n)
 
 	return weight * 2.0 * float64(k) / float64(m+n)
 }
@@ -330,12 +335,7 @@ func calculateKeywordsScore(weight float64, words1 []string, words2 []string) fl
 func compareDataItemSimilarityScore(di1 *ParsedSimpleDataItem, di2 *SimpleDataItem) float64 {
 	// key_words的相似分数 = 70 * k * 2 /(m+n)
 	// dataitem_name的相似分数 = 20 * k * 2 /(m+n)
-	// repository_id相同，加20
-   
-   fmt.Printf ("Words1=%s\n", di1.dataItem.keywords)
-   fmt.Printf ("Words2=%s\n", di2.keywords)
-   fmt.Printf ("name1=%s\n", di1.dataItem.name)
-   fmt.Printf ("name2=%s\n", di2.name)
+	// repository_id相同，加10
    
 	score1 := calculateKeywordsScore(70.0, di1.splitedKeywords, splitKeywords(di2.keywords))
 	score2 := calculateKeywordsScore(20.0, di1.splitedNameSegments, splitNameIntoSegments(di2.name))
@@ -344,7 +344,7 @@ func compareDataItemSimilarityScore(di1 *ParsedSimpleDataItem, di2 *SimpleDataIt
 		score += 10.0
 	}
 
-	fmt.Printf("score1 = %f, score2 = %f, score = %f \n", score1, score2, score)
+	//fmt.Printf("score1 = %f, score2 = %f, score = %f \n", score1, score2, score)
 
 	return score
 }
