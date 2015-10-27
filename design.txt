@@ -11,6 +11,10 @@ Assume there are M packages in the new/modified set and N packages in the old/pr
 There will be MxN+NxN parallel computing units.
 If the similiarity computation algorithm is not changed and daily new/modified items < 10,000, 
 then N=1, so there will be M+1 parallel computing units.
+If there are K items in a package, then
+1. there will be K items retrieve from DB. 
+2. there are KxK-K pairs (times of calling compareDataItemSimilarityScore).
+3. K items saved to DB
 
 Above plan doesn't suppport computing similar items for new/modified items in time.
 To support this, an approximate algorithm is used to get temporary similiar items (about one day lifecycle).

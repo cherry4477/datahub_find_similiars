@@ -1,59 +1,29 @@
 package main
 
 import (
+	"errors"
 	"sort"
 	"strings"
-	"errors"
+   "math"
 	//"encoding/json"
 	"database/sql"
-   "os"
 	"fmt"
-   "log"
-	_ "github.com/go-sql-driver/mysql"
 )
-
-type Ds struct {
-	db *sql.DB
-}
-
-var (
-	ds     = new(Ds)
-)
-
-func getDB() *sql.DB {
-	return ds.db
-}
-
-func init() {
-	DB_ADDR     := os.Getenv("MYSQL_PORT_3306_TCP_ADDR")
-	DB_PORT     := os.Getenv("MYSQL_PORT_3306_TCP_PORT")
-	DB_DATABASE := os.Getenv("MYSQL_ENV_MYSQL_DATABASE")
-	DB_USER     := os.Getenv("MYSQL_ENV_MYSQL_USER")
-	DB_PASSWORD := os.Getenv("MYSQL_ENV_MYSQL_PASSWORD")
-	DB_URL      := fmt.Sprintf(`%s:%s@tcp(%s:%s)/%s?charset=utf8`, DB_USER, DB_PASSWORD, DB_ADDR, DB_PORT, DB_DATABASE)
-	
-	log.Println("connect to", DB_URL)
-	db, err := sql.Open("mysql", DB_URL)
-	if err != nil {
-		log.Printf ("error: %s\n", err)
-	} else {
-		ds.db = db
-	}
-}
 
 //=====================================================
-// 
+//
 //=====================================================
 
 const (
 	DEBUG = true
+   MinimumSimiliariry = 14.0
 )
 
-func dbError (err error, secureErrMessage string) error {
+func dbError(err error, secureErrMessage string) error {
 	if DEBUG { //
 		return err
 	} else {
-		return errors.New (secureErrMessage)	
+		return errors.New(secureErrMessage)
 	}
 }
 
@@ -75,9 +45,9 @@ type SimiliarDataItem struct {
 func searchSimiliarDataItems(forItemId int) ([]*SimiliarDataItem, error) {
 	db := getDB()
 	if db == nil {
-		return nil, errors.New ("db is not initilized yet")
+		return nil, errors.New("db is not initilized yet")
 	}
-	
+
 	maxRows := 20
 	sql := fmt.Sprintf(`select 
 				a.SIMILAR_ID
@@ -88,7 +58,7 @@ func searchSimiliarDataItems(forItemId int) ([]*SimiliarDataItem, error) {
 				`, forItemId, maxRows)
 	rows, err := db.Query(sql)
 	if err != nil {
-		return nil, dbError (err, "db query error")
+		return nil, dbError(err, "db query error")
 	}
 	defer rows.Close()
 
@@ -96,12 +66,12 @@ func searchSimiliarDataItems(forItemId int) ([]*SimiliarDataItem, error) {
 	numIds := 0
 	for rows.Next() && numIds < maxRows {
 		if err := rows.Scan(&ids[numIds]); err != nil {
-			return nil, dbError (err, "db query scan error")
+			return nil, dbError(err, "db query scan error")
 		}
 		numIds++
 	}
 	if err := rows.Err(); err != nil {
-		return nil, dbError (err, "db query rows error")
+		return nil, dbError(err, "db query rows error")
 	}
 
 	items := make([]*SimiliarDataItem, numIds)
@@ -127,8 +97,8 @@ func retrieveSimiliarDataItem(db *sql.DB, id int) (*SimiliarDataItem, error) {
 				where a.DATAITEM_ID=%d
 				`, id)
 	err := db.QueryRow(sql).Scan(
-		&item.ID, &item.Name, 
-		&item.Views, &item.Follows, &item.Downloads, &item.Stars, 
+		&item.ID, &item.Name,
+		&item.Views, &item.Follows, &item.Downloads, &item.Stars,
 		&item.Refresh_date, &item.Usability)
 	if err != nil {
 		return nil, err
@@ -144,27 +114,27 @@ func retrieveSimiliarDataItem(db *sql.DB, id int) (*SimiliarDataItem, error) {
 func buildSimiliarDataItems(forItemId int) error {
 	db := getDB()
 	if db == nil {
-		return errors.New ("db is not initilized yet")
+		return errors.New("db is not initilized yet")
 	}
-	
+
 	err := deleteSimiliarDataItems(db, forItemId)
 	if err != nil {
-		return dbError (err, "db delete error")
+		return dbError(err, "db delete error")
 	}
 
 	forItem, err := retrieveSimpleDataItem(db, forItemId)
 	if err != nil {
-		return dbError (err, "db retrieve simple data item error")
+		return dbError(err, "db retrieve simple data item error")
 	}
 
 	allItems, err := retrieveAllSimpleDataItems(db)
 	if err != nil {
-		return dbError (err, "db retrieve items error")
+		return dbError(err, "db retrieve items error")
 	}
 
-	similiarItems := findSimiliarSimpleDataItems(forItem, allItems, 70.0)
+	similiarItems := findSimiliarSimpleDataItems(forItem, allItems, MinimumSimiliariry)
 	for _, item := range similiarItems {
-		insertSimiliarDataItem(db, forItem.id, item.id, int(item.score))
+		insertSimiliarDataItem(db, forItem.id, item.id, int(math.Ceil (item.score)))
 	}
 
 	return nil
@@ -217,7 +187,7 @@ func retrieveSimpleDataItem(db *sql.DB, id int) (*SimpleDataItem, error) {
 	return &item, nil
 }
 
-func retrieveAllSimpleDataItems(db *sql.DB, ) ([]*SimpleDataItem, error) {
+func retrieveAllSimpleDataItems(db *sql.DB) ([]*SimpleDataItem, error) {
 	maxRows := 100
 	sql := fmt.Sprintf("select a.DATAITEM_ID, a.DATAITEM_NAME, a.KEY_WORDS, a.REPOSITORY_ID from DH_DATAITEM a LIMIT %d", maxRows)
 	rows, err := db.Query(sql)
@@ -275,7 +245,7 @@ type ParsedSimpleDataItem struct {
 func findSimiliarSimpleDataItems(dataItem *SimpleDataItem, allDataItems []*SimpleDataItem, minimumScore float64) []*SimpleDataItem {
 	pdi := &ParsedSimpleDataItem{
 		dataItem:            dataItem,
-		splitedKeywords:     strings.Split(dataItem.keywords, ";"),
+		splitedKeywords:     splitKeywords(dataItem.keywords),
 		splitedNameSegments: splitNameIntoSegments(dataItem.name),
 	}
 
@@ -318,8 +288,24 @@ func splitNameIntoSegments(name string) []string {
 	return segments
 }
 
+func splitKeywords(keywords string) []string {
+	words := strings.Split(keywords, ";")
+   num := len (words)
+   index := 0
+   for i := 0; i < num; i++ {
+      if len (strings.TrimSpace (words[0])) > 0 {
+         words [index] = words [i]
+         index ++
+      }
+   }
+   return words [:index]
+}
+
 func calculateKeywordsScore(weight float64, words1 []string, words2 []string) float64 {
 	k := 0
+
+	fmt.Printf("words1 = %s\n", strings.Join(words1, ","))
+	fmt.Printf("words2 = %s\n", strings.Join(words1, ","))
 
 	n := len(words1)
 	m := len(words2)
@@ -335,6 +321,8 @@ func calculateKeywordsScore(weight float64, words1 []string, words2 []string) fl
 			}
 		}
 	}
+   
+   fmt.Printf("k = %d, m = %d, n = %d\n", k, m, n)
 
 	return weight * 2.0 * float64(k) / float64(m+n)
 }
@@ -343,12 +331,20 @@ func compareDataItemSimilarityScore(di1 *ParsedSimpleDataItem, di2 *SimpleDataIt
 	// key_words的相似分数 = 70 * k * 2 /(m+n)
 	// dataitem_name的相似分数 = 20 * k * 2 /(m+n)
 	// repository_id相同，加20
-	score1 := calculateKeywordsScore(70.0, di1.splitedKeywords, strings.Split(di2.keywords, ";"))
+   
+   fmt.Printf ("Words1=%s\n", di1.dataItem.keywords)
+   fmt.Printf ("Words2=%s\n", di2.keywords)
+   fmt.Printf ("name1=%s\n", di1.dataItem.name)
+   fmt.Printf ("name2=%s\n", di2.name)
+   
+	score1 := calculateKeywordsScore(70.0, di1.splitedKeywords, splitKeywords(di2.keywords))
 	score2 := calculateKeywordsScore(20.0, di1.splitedNameSegments, splitNameIntoSegments(di2.name))
 	score := score1 + score2
 	if di1.dataItem.respositoryId == di2.respositoryId {
 		score += 10.0
 	}
+
+	fmt.Printf("score1 = %f, score2 = %f, score = %f \n", score1, score2, score)
 
 	return score
 }

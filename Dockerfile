@@ -4,8 +4,8 @@ ENV SERVICE_NAME datahub-find-similiars
 ENV SRC_DIR /go/src/github.com/asiainfoLDP/$SERVICE_NAME
 COPY . $SRC_DIR
 
-ENV START_SCRIPT start.sh
 WORKDIR $SRC_DIR
+ENV START_SCRIPT start.sh
 RUN chmod +x $START_SCRIPT
 go build
 
