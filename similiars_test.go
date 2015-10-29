@@ -109,7 +109,7 @@ func TestGetSimiliars(t *testing.T) {
 	}
 	t.Logf("len (allSimpleDataItems) = %d\n", len(allSimpleDataItems))
 
-	similiarSimpleDataItems := retrieveSimiliarSimpleDataItems(item, allSimpleDataItems, 30.0)
+	similiarSimpleDataItems := findSimiliarSimpleDataItems(item, allSimpleDataItems, 30.0)
 	if len(similiarSimpleDataItems) < 1 || similiarSimpleDataItems[0].id != 4 || similiarSimpleDataItems[0].score != 100.0 {
 		t.Errorf("the first item id should be 4\n")
 	}
