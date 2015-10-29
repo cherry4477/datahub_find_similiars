@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+	"math"
 	"sort"
 	"strings"
-   "math"
 	//"encoding/json"
 	"database/sql"
 	"fmt"
@@ -15,8 +15,8 @@ import (
 //=====================================================
 
 const (
-	DEBUG = true
-   MinimumSimiliariry = 14.0
+	DEBUG              = true
+	MinimumSimiliariry = 14.0
 )
 
 func dbError(err error, secureErrMessage string) error {
@@ -25,6 +25,10 @@ func dbError(err error, secureErrMessage string) error {
 	} else {
 		return errors.New(secureErrMessage)
 	}
+}
+
+func getDB() *sql.DB {
+	return ds.db
 }
 
 //=====================================================
@@ -134,7 +138,7 @@ func buildSimiliarDataItems(forItemId int) error {
 
 	similiarItems := findSimiliarSimpleDataItems(forItem, allItems, MinimumSimiliariry)
 	for _, item := range similiarItems {
-		insertSimiliarDataItem(db, forItem.id, item.id, int(math.Ceil (item.score)))
+		insertSimiliarDataItem(db, forItem.id, item.id, int(math.Ceil(item.score)))
 	}
 
 	return nil
@@ -281,10 +285,10 @@ func findSimiliarSimpleDataItems(dataItem *SimpleDataItem, allDataItems []*Simpl
 func splitNameIntoSegments(name string) []string {
 	runes := []rune(name)
 	num := len(runes)
-   if num <= 2 {
-      return []string{name}
-   }
-   
+	if num <= 2 {
+		return []string{name}
+	}
+
 	segments := make([]string, num-1)
 	for i := 0; i < num-1; i++ {
 		segments[i] = string(runes[i : i+2])
@@ -294,16 +298,16 @@ func splitNameIntoSegments(name string) []string {
 
 func splitKeywords(keywords string) []string {
 	words := strings.Split(keywords, ";")
-   num := len (words)
-   index := 0
-   for i := 0; i < num; i++ {
-      word := words[i]
-      if len (strings.TrimSpace (word)) > 0 {
-         words [index] = word
-         index ++
-      }
-   }
-   return words [:index]
+	num := len(words)
+	index := 0
+	for i := 0; i < num; i++ {
+		word := words[i]
+		if len(strings.TrimSpace(word)) > 0 {
+			words[index] = word
+			index++
+		}
+	}
+	return words[:index]
 }
 
 func calculateKeywordsScore(weight float64, words1 []string, words2 []string) float64 {
@@ -326,8 +330,8 @@ func calculateKeywordsScore(weight float64, words1 []string, words2 []string) fl
 			}
 		}
 	}
-   
-   //fmt.Printf("k = %d, m = %d, n = %d\n", k, m, n)
+
+	//fmt.Printf("k = %d, m = %d, n = %d\n", k, m, n)
 
 	return weight * 2.0 * float64(k) / float64(m+n)
 }
@@ -336,7 +340,7 @@ func compareDataItemSimilarityScore(di1 *ParsedSimpleDataItem, di2 *SimpleDataIt
 	// key_words的相似分数 = 70 * k * 2 /(m+n)
 	// dataitem_name的相似分数 = 20 * k * 2 /(m+n)
 	// repository_id相同，加10
-   
+
 	score1 := calculateKeywordsScore(70.0, di1.splitedKeywords, splitKeywords(di2.keywords))
 	score2 := calculateKeywordsScore(20.0, di1.splitedNameSegments, splitNameIntoSegments(di2.name))
 	score := score1 + score2

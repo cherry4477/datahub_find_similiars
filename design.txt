@@ -18,3 +18,7 @@ If there are K items in a package, then
 
 Above plan doesn't suppport computing similar items for new/modified items in time.
 To support this, an approximate algorithm is used to get temporary similiar items (about one day lifecycle).
+
+============================================================================
+
+Search and recommendation are different. 

@@ -12,32 +12,29 @@ import (
 //======================================================
 
 type Result struct {
-	Ok        bool                `json:"result"` // true | false
-	Err       string              `json:"error,omitempty"`
-	Similiars []*SimiliarDataItem `json:"similiars,omitempty"`
+	Similiars []*SimiliarDataItem `json:"similiars"`
 }
 
 //======================================================
 //
 //======================================================
 
-func jsonResult(w http.ResponseWriter, errorMessage string, items []*SimiliarDataItem) {
-	result := Result{}
-	if errorMessage == "" {
-		result.Ok = true
-		result.Similiars = items
-	} else {
-		result.Ok = false
-		result.Err = errorMessage
+func jsonResult(errorMessage string, items []*SimiliarDataItem) []byte {
+	if errorMessage != "" {
+		items = nil
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if items == nil {
+		items = []*SimiliarDataItem{}
+	}
+
+	result := Result{Similiars: items}
 
 	data, err := json.Marshal(&result)
 	if err != nil {
-		w.Write([]byte(`{"result":false,"error":"json error"}`))
+		return []byte(`{"result":false,"error":"json error"}`)
 	} else {
-		w.Write(data)
+		return data
 	}
 }
 
@@ -45,42 +42,34 @@ func jsonResult(w http.ResponseWriter, errorMessage string, items []*SimiliarDat
 //
 //======================================================
 
-func onBuildSimiliarDataItems(w http.ResponseWriter, r *http.Request) {
+func getBuildSimiliarDataItemsResult(r *http.Request) []byte {
 	r.ParseForm()
 	itemIdString := r.FormValue("data_item_id")
 	itemId, err := strconv.Atoi(itemIdString)
 	if err != nil {
-		jsonResult(w, "Invalid data_item_id", nil)
-		return
+		return jsonResult("Invalid data_item_id", nil)
 	}
 
 	err = buildSimiliarDataItems(itemId)
 	if err != nil {
-		jsonResult(w, fmt.Sprintf("Build similiars error: %s", err), nil)
-		return
+		return jsonResult(fmt.Sprintf("Build similiars error: %s", err), nil)
 	}
 
-	jsonResult(w, "", nil)
+	return jsonResult("", nil)
 }
 
-func onSearchSimiliarDataItems(w http.ResponseWriter, r *http.Request) {
+func getSearchSimiliarDataItemsResult(r *http.Request) []byte {
 	r.ParseForm()
 	itemIdString := r.FormValue("data_item_id")
 	itemId, err := strconv.Atoi(itemIdString)
 	if err != nil {
-		jsonResult(w, "Invalid data_item_id", nil)
-		return
+		return jsonResult("Invalid data_item_id", nil)
 	}
 
 	items, err := searchSimiliarDataItems(itemId)
 	if err != nil {
-		jsonResult(w, fmt.Sprintf("Search similiars error: %s", err), nil)
-		return
+		return jsonResult(fmt.Sprintf("Search similiars error: %s", err), nil)
 	}
 
-	jsonResult(w, "", items)
-}
-
-func onServiceError(w http.ResponseWriter, r *http.Request) {
-	jsonResult(w, "Unsupported url", nil)
+	return jsonResult("", items)
 }
