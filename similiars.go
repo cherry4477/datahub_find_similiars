@@ -192,7 +192,7 @@ func retrieveSimpleDataItem(db *sql.DB, id int) (*SimpleDataItem, error) {
 }
 
 func retrieveAllSimpleDataItems(db *sql.DB) ([]*SimpleDataItem, error) {
-	maxRows := 100
+	maxRows := 256
 	sql := fmt.Sprintf("select a.DATAITEM_ID, a.DATAITEM_NAME, a.KEY_WORDS, a.REPOSITORY_ID from DH_DATAITEM a LIMIT %d", maxRows)
 	rows, err := db.Query(sql)
 	if err != nil {

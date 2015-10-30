@@ -12,27 +12,31 @@ import (
 //======================================================
 
 type Result struct {
-	Similiars []*SimiliarDataItem `json:"similiars"`
+	Ok        bool                `json:"ok"`
+	Error     string              `json:"error,omitempty"`
+	Similiars []*SimiliarDataItem `json:"similiars,omitempty"`
 }
+
+const JsonErrorMessage string = `{"ok":false,"error":"json error"}`
 
 //======================================================
 //
 //======================================================
 
 func jsonResult(errorMessage string, items []*SimiliarDataItem) []byte {
+	result := &Result{}
+	
 	if errorMessage != "" {
-		items = nil
+		result.Ok = false
+		result.Error = errorMessage
+	} else {
+		result.Ok = true
+		result.Similiars = items
 	}
-
-	if items == nil {
-		items = []*SimiliarDataItem{}
-	}
-
-	result := Result{Similiars: items}
 
 	data, err := json.Marshal(&result)
 	if err != nil {
-		return []byte(`{"result":false,"error":"json error"}`)
+		return []byte(JsonErrorMessage)
 	} else {
 		return data
 	}
